@@ -1,0 +1,82 @@
+# 🚀 Ultimate Scraper – Projet 4
+
+Scraper web multi-langages orchestré par Go.
+
+---
+
+## ✅ Ce qui fonctionne
+
+- API Go (orchestrateur)
+- Goroutines + Mutex
+- Endpoints `/scrape` et `/metrics`
+- Scrapers fonctionnels :
+  - ✅ Python (BeautifulSoup)
+  - ✅ PHP (DOMDocument)
+  - ✅ Go (scraper interne)
+  - ✅ Node.js (axios + cheerio)
+
+---
+
+## ⚠️ En cours / à finaliser
+
+- ⏳ Rust (dépendances, compilation)
+- ⏳ C++ (compilateur manquant)
+
+---
+
+## 📁 Structure
+
+ultimate-scraper/
+├── main.go # API orchestrateur
+├── scraper_go.go
+├── scraper_py.py
+├── scraper_js.js
+├── scraper_php.php
+├── scraper_rust.rs # ⏳ à finaliser
+├── scraper_cpp.cpp # ⏳ à finaliser
+├── data/
+│ ├── Python.json
+│ ├── Node.json
+│ ├── PHP.json
+│ └── Go.json
+└── Cargo.toml # Rust (en cours)
+
+
+---
+
+## 🚀 Lancer le projet
+
+```bash
+# Lancer l'API
+go run main.go
+
+# Lancer tous les scrapers
+curl -X POST http://localhost:8080/scrape
+
+# Voir la mémoire
+curl http://localhost:8080/metrics
+
+[
+  {"lang":"Python","count":100},
+  {"lang":"PHP","count":100},
+  {"lang":"Node","count":100},
+  {"lang":"Go","count":20},
+  {"lang":"Rust","count":0,"error":"..."},
+  {"lang":"C++","count":0,"error":"..."}
+]
+
+🧠 Concepts abordés
+Goroutines
+
+Channels
+
+Mutex
+
+exec.Command
+
+API REST
+
+Multi-langages
+
+📅 Projet 4 / 5
+Fait dans le cadre de l’apprentissage Go.
