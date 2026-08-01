@@ -23,6 +23,9 @@ type Result struct {
 var (
 	results []Result
 	mu     sync.Mutex
+	started int
+	completed int
+	startTime time.Time
 )
 
 func main() {
@@ -30,6 +33,7 @@ func main() {
 
 	http.HandleFunc("/scrape", scrapeHandler)
 	http.HandleFunc("/metrics", metricsHandler)
+	http.HandleFunc("/status", statusHandler)
 	http.HandleFunc("/", homeHandler)
 
 	fmt.Println("🌐 http://localhost:8080")
@@ -41,6 +45,15 @@ func scrapeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "POST required", 405)
 		return
 	}
+
+	// le channel pour limiter le nombre de scrappers simultanés
+	mu.Lock()
+	started = 0
+	completed = 0
+	startTime = time.Now()
+	mu.Unlock()
+
+
 	results = []Result{}
 	var wg sync.WaitGroup
 
@@ -60,9 +73,16 @@ func scrapeHandler(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func(s struct{ name, cmd, script string; mem int }){
 			defer wg.Done()
+
+			mu.Lock()
+			started++
+			mu.Unlock()
+
 			start := time.Now()
 			cmd := exec.Command(s.cmd, s.script)
 			out, err := cmd.CombinedOutput()
+
+
 
 			res := Result{Lang: s.name, MemoryMB: s.mem, Duration: time.Since(start).String()}
 
@@ -76,6 +96,7 @@ func scrapeHandler(w http.ResponseWriter, r *http.Request) {
 			}
 				mu.Lock()
 				results = append(results, res)
+				completed++
 				mu.Unlock()
 			}(s)
 		}
@@ -94,8 +115,32 @@ func scrapeHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	func statusHandler(w http.ResponseWriter, r *http.Request){
+		mu.Lock()
+		elapsed := time.Since(startTime)
+		startedCopy := started
+		completedCopy := completed
+		mu.Unlock()
+
+		w.Header().Set("Content-type", "aplication/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+		"started":   startedCopy,
+        "completed": completedCopy,
+        "elapsed":   elapsed.String(),
+		})
+	}
+
 	func homeHandler(w http.ResponseWriter, r *http.Request){
-		fmt.Fprintf(w, "POST /scrape\nGET /metrics")
+		fmt.Fprintf(w, "POST /scrape\nGET /metrics\nGET /status")
+	}
+	
+	func resetHandler(w http.ResponseWritter, r *http.Request){
+		mu.Lock()
+		started = 0
+		completed = 0
+		startTime = time.Now()
+		mu.Unlock()
+		w.Write([]byte("✅ Reset effectué"))
 	}
 
 
